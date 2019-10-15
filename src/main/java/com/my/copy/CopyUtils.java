@@ -150,6 +150,7 @@ public class CopyUtils {
   }
 
   private static Class getClassByList(Field field) {
+    //此处借助了spring框架提供的类 泛型类型
     ResolvableType resolvableType = ResolvableType.forField(field);
     return resolvableType.getGeneric(0).resolve();
   }
