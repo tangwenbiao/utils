@@ -1,32 +1,33 @@
 package com.my.capability;
 
+import com.my.capability.concurrent.InsertHandler;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.springframework.stereotype.Service;
 
 /**
  * @author: TangFenQi
- * @description:
- * @date：2019/4/25 17:08
+ * @description: 性能测试基础类
+ * @date：2019/10/15 15:58
  */
-@Service
-public class PerformanceService {
+public class CapabilityBaseService {
 
   /**
    * 趋势测试
    * <p>
    * 小范围不自增
    *
-   * @param amount 测试条数
+   * @param concurrenceAmount 并发数
+   * @param everyAmount 每个线程执行数
+   * @param businessService 需要测试的方法
    */
-  public void simpleTrendTest(Integer amount, IBusinessService businessService)
+  public void simpleTrendTest(Integer concurrenceAmount, Integer everyAmount,
+      IBusinessService businessService)
       throws InterruptedException {
-    CountDownLatch countDownLatch = new CountDownLatch(1);
-    Integer concurrenceAmount = Runtime.getRuntime().availableProcessors() * 2;
-    Integer everyAmount = amount / concurrenceAmount;
+    //每个线程需要执行的次数
     AtomicInteger endPoint = new AtomicInteger(0);
     AtomicInteger errPoint = new AtomicInteger(0);
     //放入线程
+    CountDownLatch countDownLatch = new CountDownLatch(1);
     for (int i = 0; i < concurrenceAmount; i++) {
       new InsertHandler(countDownLatch, everyAmount,
           endPoint, errPoint, businessService).start();
@@ -36,32 +37,13 @@ public class PerformanceService {
     Long startTime = System.currentTimeMillis();
     countDownLatch.countDown();
     //记录结果
+    int amount = everyAmount * concurrenceAmount;
     while (true) {
-      if (amount.equals(endPoint.get())) {
+      if (amount == endPoint.get()) {
         System.out.println("整体时间(单位毫秒):" + (System.currentTimeMillis() - startTime));
         System.out.println("异常的数量:" + errPoint.get() + " 总体数量:" + endPoint.get());
         break;
       }
     }
   }
-
-  /**
-   * 当已经插入大编号
-   * <p>
-   * 小范围不自增
-   *
-   * @param amount 测试条数
-   * @param previousAmount 大编号测试条数
-   */
-  public void exceptionTrendTest(Integer amount, Integer previousAmount) {
-    //插入大编号
-
-    //放入线程
-
-    //执行
-
-    //记录结果
-  }
-
-
 }

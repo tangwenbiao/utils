@@ -1,8 +1,16 @@
 package com.my.copy;
 
+import com.my.copy.model.CompareA;
+import com.my.copy.model.CompareB;
+import com.my.copy.model.GeneratorModelUtils;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.BeanUtils;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
@@ -14,9 +22,92 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class CopyUtilsTest {
 
+
   @Test
-  public void test(){
-    System.out.println("11");
+  public void copyUtils100000() {
+    //初始化实体
+    int count = 100000;
+    int detail = 0;
+    List<CompareA> compareAList = GeneratorModelUtils.generator(count, detail);
+    //进行测试
+    List<CompareB> compareBList = new ArrayList<>(count);
+    //测试
+    Long startTime = System.currentTimeMillis();
+    for (CompareA compareA : compareAList) {
+      CompareB compareB = new CompareB();
+      CopyUtils.copy(compareA, compareB);
+      compareBList.add(compareB);
+    }
+    Long endTime = System.currentTimeMillis();
+    System.out
+        .println("耗时:" + (endTime - startTime) / 1000 + "秒," + (endTime - startTime) % 1000 + "毫秒");
+    System.out.println();
+  }
+
+  @Test
+  public void compareWithBeanCopier100000() {
+    //初始化实体
+    int count = 100000;
+    int detail = 0;
+    List<CompareA> compareAList = GeneratorModelUtils.generator(count, detail);
+    //获取比较类
+    BeanCopier beanCopier = BeanCopier.create(CompareA.class, CompareB.class, false);
+    //进行测试
+    List<CompareB> compareBList = new ArrayList<>(count);
+    //测试
+    Long startTime = System.currentTimeMillis();
+    for (CompareA compareA : compareAList) {
+      CompareB compareB = new CompareB();
+      beanCopier.copy(compareA, compareB, null);
+      compareBList.add(compareB);
+    }
+    Long endTime = System.currentTimeMillis();
+    System.out
+        .println("耗时:" + (endTime - startTime) / 1000 + "秒," + (endTime - startTime) % 1000 + "毫秒");
+    System.out.println();
+  }
+
+  @Test
+  public void CompareWithBeanUtilsInLang100000() {
+    //初始化实体
+    int count = 100000;
+    int detail = 0;
+    List<CompareA> compareAList = GeneratorModelUtils.generator(count, detail);
+    //进行测试
+    List<CompareB> compareBList = new ArrayList<>(count);
+    //测试
+    Long startTime = System.currentTimeMillis();
+    for (CompareA compareA : compareAList) {
+      CompareB compareB = new CompareB();
+      BeanUtils.copyProperties(compareA, compareB);
+      compareBList.add(compareB);
+    }
+    Long endTime = System.currentTimeMillis();
+    System.out
+        .println("耗时:" + (endTime - startTime) / 1000 + "秒," + (endTime - startTime) % 1000 + "毫秒");
+    System.out.println();
+  }
+
+  @Test
+  public void CompareWithBeanUtilsInSpring100000()
+      throws InvocationTargetException, IllegalAccessException {
+    //初始化实体
+    int count = 100000;
+    int detail = 0;
+    List<CompareA> compareAList = GeneratorModelUtils.generator(count, detail);
+    //进行测试
+    List<CompareB> compareBList = new ArrayList<>(count);
+    //测试
+    Long startTime = System.currentTimeMillis();
+    for (CompareA compareA : compareAList) {
+      CompareB compareB = new CompareB();
+      org.apache.commons.beanutils.BeanUtils.copyProperties(compareA, compareB);
+      compareBList.add(compareB);
+    }
+    Long endTime = System.currentTimeMillis();
+    System.out
+        .println("耗时:" + (endTime - startTime) / 1000 + "秒," + (endTime - startTime) % 1000 + "毫秒");
+    System.out.println();
   }
 
 }

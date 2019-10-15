@@ -1,5 +1,6 @@
-package com.my.capability;
+package com.my.capability.concurrent;
 
+import com.my.capability.IBusinessService;
 import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;

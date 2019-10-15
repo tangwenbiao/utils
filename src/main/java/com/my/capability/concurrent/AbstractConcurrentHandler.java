@@ -1,4 +1,4 @@
-package com.my.capability;
+package com.my.capability.concurrent;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
