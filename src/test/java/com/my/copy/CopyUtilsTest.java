@@ -1,11 +1,15 @@
 package com.my.copy;
 
 import com.my.copy.model.CompareA;
+import com.my.copy.model.CompareADetail;
+import com.my.copy.model.CompareAEnum;
 import com.my.copy.model.CompareB;
 import com.my.copy.model.GeneratorModelUtils;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.BeanUtils;
@@ -22,6 +26,21 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class CopyUtilsTest {
 
+
+  @Test
+  public void copyTest() {
+    List<CompareA> compareAList = GeneratorModelUtils.generator(1, 1);
+    CompareA compareA = compareAList.get(0);
+    CompareB compareB = new CompareB();
+    CopyUtils.copy(compareA, compareB);
+    Assert.assertEquals(compareA.getAge(), compareB.getAge());
+    Assert.assertEquals(compareA.getAddress(), compareB.getAddress());
+    Assert.assertEquals(compareA.getName(), compareB.getName());
+    Assert.assertEquals(compareA.getPhone(), compareB.getPhone());
+    Assert.assertEquals(compareA.getSchoolName(), compareB.getSchoolName());
+
+    System.out.println();
+  }
 
   @Test
   public void copyUtils100000() {
@@ -107,6 +126,12 @@ public class CopyUtilsTest {
     Long endTime = System.currentTimeMillis();
     System.out
         .println("耗时:" + (endTime - startTime) / 1000 + "秒," + (endTime - startTime) % 1000 + "毫秒");
+    System.out.println();
+  }
+
+  @Test
+  public void test() throws NoSuchMethodException {
+    Method method = CompareAEnum.A.getClass().getMethod("valueOf", String.class);
     System.out.println();
   }
 

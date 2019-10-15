@@ -1,8 +1,10 @@
 package com.my.copy;
 
 import com.google.gson.Gson;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,10 +27,13 @@ public class CopyUtils {
 
   private static Gson gson = new Gson();
 
-  public static Map<String, BeanCopier> beanCopierMap;
+  private static Map<String, BeanCopier> beanCopierMap;
+
+  private static Map<Class, Field[]> fieldCacheMap;
 
   static {
     beanCopierMap = new HashMap<>();
+    fieldCacheMap = new HashMap<>();
   }
 
   public static void copy(Object sources, Object target) {
@@ -45,14 +50,58 @@ public class CopyUtils {
     //clear list
     clearList(target, targetFieldMap);
     //查询是否有list
-    List<Field> fields = getListTypeInFields(sourceClazz);
+    List<Field> listFields = getListTypeFromFields(sourceClazz);
+    //填充list
+    fillList(listFields, targetFieldMap, sources, target);
+    //查询是否有枚举
+    List<Field> enumFields = getEnumTypeFromFields(sourceClazz);
+    //填充enum
+    fillEnum(enumFields, targetFieldMap, sources, target);
+  }
+
+  private static void fillEnum(List<Field> fieldList, Map<String, Field> targetFieldMap,
+      Object source, Object target) {
+    for (Field field : fieldList) {
+      //根据属性名匹配
+      String fieldName = field.getName();
+      Field targetField = targetFieldMap.get(fieldName);
+      if (targetField != null) {
+        //获取原始值
+        Enum sourceEnum = (Enum) getInstance(source, field);
+
+        Method targetValueOfMethod;
+        try {
+          targetValueOfMethod = targetField.getClass().getMethod("valueOf", String.class);
+        } catch (NoSuchMethodException e) {
+          log.error("not found value of method!! class:{}", targetField.getClass());
+          throw new RuntimeException("copier of the failure!");
+        }
+        //获取枚举值
+        Object enumValue;
+        try {
+          enumValue = targetValueOfMethod.invoke(target, sourceEnum.name());
+        } catch (IllegalAccessException | InvocationTargetException e) {
+          log.error("not found value of method!! class:{} err:{}", targetField.getClass(), e);
+          throw new RuntimeException("copier of the failure!");
+        } catch (IllegalArgumentException e) {
+          enumValue = null;
+        }
+
+      }
+    }
+
+  }
+
+  private static void fillList(List<Field> fields, Map<String, Field> targetFieldMap,
+      Object sources, Object target) {
     for (Field field : fields) {
       //根据属性名匹配
       String fieldName = field.getName();
       Field targetField = targetFieldMap.get(fieldName);
-      if (!(targetField == null)) {
+      if (targetField != null) {
         //找到sources 的list 对象实例
-        List sourceList = getListInstance(sources, field);
+        List sourceList = (List) getInstance(sources, field);
+        ;
         if (CollectionUtils.isEmpty(sourceList)) {
           sourceList = new ArrayList();
           setList(target, targetField, new ArrayList());
@@ -109,7 +158,7 @@ public class CopyUtils {
     return list;
   }
 
-  private static List getListInstance(Object sources, Field field) {
+  private static Object getInstance(Object sources, Field field) {
     Object sourcesListInstance;
     try {
       field.setAccessible(true);
@@ -118,7 +167,7 @@ public class CopyUtils {
       log.error("not found list!!", e);
       throw new RuntimeException("copier of the failure!");
     }
-    return (List) sourcesListInstance;
+    return sourcesListInstance;
   }
 
   private static Object instance(Class clazz) {
@@ -155,12 +204,33 @@ public class CopyUtils {
     return resolvableType.getGeneric(0).resolve();
   }
 
-  private static List<Field> getListTypeInFields(Class clazz) {
-    Field[] fields = clazz.getDeclaredFields();
+  private static List<Field> getListTypeFromFields(Class clazz) {
+    return getFieldsByType(clazz, List.class);
+  }
+
+  private static List<Field> getEnumTypeFromFields(Class clazz) {
+    Field[] fields = getField(clazz);
     List<Field> fieldList = Arrays.stream(fields)
-        .filter(field -> field.getType().equals(List.class))
+        .filter(field -> field.getClass().isEnum())
         .collect(Collectors.toList());
     return fieldList;
+  }
+
+  private static List<Field> getFieldsByType(Class clazz, Class typeClass) {
+    List<Field> fieldList = Arrays.stream(getField(clazz))
+        .filter(field -> field.getType().equals(typeClass))
+        .collect(Collectors.toList());
+    return fieldList;
+  }
+
+  private static Field[] getField(Class targetClazz) {
+    Field[] fields;
+    if (fieldCacheMap.containsKey(targetClazz)) {
+      fields = fieldCacheMap.get(targetClazz);
+    } else {
+      fields = targetClazz.getDeclaredFields();
+    }
+    return fields;
   }
 
   private static Object copyObject(Object sources, Object target) {
