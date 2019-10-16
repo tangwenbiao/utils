@@ -10,6 +10,9 @@ import lombok.Data;
  */
 @Data
 public class CompareB {
+
+  private CompareBEnum cEnum;
+
   private String name;
 
   private Integer age;

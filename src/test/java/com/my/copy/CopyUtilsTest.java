@@ -46,7 +46,7 @@ public class CopyUtilsTest {
   public void copyUtils100000() {
     //初始化实体
     int count = 100000;
-    int detail = 0;
+    int detail = 10;
     List<CompareA> compareAList = GeneratorModelUtils.generator(count, detail);
     //进行测试
     List<CompareB> compareBList = new ArrayList<>(count);
@@ -130,8 +130,10 @@ public class CopyUtilsTest {
   }
 
   @Test
-  public void test() throws NoSuchMethodException {
-    Method method = CompareAEnum.A.getClass().getMethod("valueOf", String.class);
+  public void test() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    CompareAEnum aEnum = CompareAEnum.A;
+    Method valuesMethod = CompareAEnum.class.getMethod("values");
+    Enum[] list=(Enum[]) valuesMethod.invoke(aEnum);
     System.out.println();
   }
 

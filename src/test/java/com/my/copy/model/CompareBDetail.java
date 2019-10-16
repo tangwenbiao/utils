@@ -9,6 +9,7 @@ import lombok.Data;
  */
 @Data
 public class CompareBDetail {
+
   private String area;
 
   private String car;
@@ -16,4 +17,6 @@ public class CompareBDetail {
   private String dog;
 
   private String house;
+
+  private CompareBDetailEnum detailEnum;
 }

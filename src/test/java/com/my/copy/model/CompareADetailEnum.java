@@ -5,7 +5,7 @@ package com.my.copy.model;
  * @description:
  * @date：2019/10/15 18:08
  */
-public enum CompareAEnum {
+public enum CompareADetailEnum {
 
   A,
   B;

@@ -38,6 +38,7 @@ public class GeneratorModelUtils {
         .phone("123124124")
         .name("a13214")
         .schoolName("aa123")
+        .cEnum(CompareAEnum.B)
         .detailList(generatorDetail(detailCount))
         .build();
     return compareA;
@@ -57,6 +58,7 @@ public class GeneratorModelUtils {
         .car("asdfa")
         .dog("a1231")
         .house("1233")
+        .detailEnum(CompareADetailEnum.B)
         .build();
     return detail;
   }

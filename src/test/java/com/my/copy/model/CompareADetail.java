@@ -21,4 +21,6 @@ public class CompareADetail {
 
   private String house;
 
+  private CompareADetailEnum detailEnum;
+
 }

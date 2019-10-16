@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CompareA {
 
+  private CompareAEnum cEnum;
+
   private String name;
 
   private Integer age;
