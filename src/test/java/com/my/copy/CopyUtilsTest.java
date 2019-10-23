@@ -31,6 +31,7 @@ public class CopyUtilsTest {
   public void copyTest() {
     List<CompareA> compareAList = GeneratorModelUtils.generator(1, 1);
     CompareA compareA = compareAList.get(0);
+    compareA.setCEnum(CompareAEnum.A);
     CompareB compareB = new CompareB();
     CopyUtils.copy(compareA, compareB);
     Assert.assertEquals(compareA.getAge(), compareB.getAge());
@@ -130,11 +131,12 @@ public class CopyUtilsTest {
   }
 
   @Test
-  public void test() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+  public void test()
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     CompareAEnum aEnum = CompareAEnum.A;
-    Method valuesMethod = CompareAEnum.class.getMethod("values");
-    Enum[] list=(Enum[]) valuesMethod.invoke(aEnum);
-    System.out.println();
+    CompareAEnum aEnum1 = CompareAEnum.A;
+    System.out.println(aEnum.getClass());
+    System.out.println(aEnum1.getClass());
   }
 
 }

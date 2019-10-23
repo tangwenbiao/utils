@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.naming.Name;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.core.ResolvableType;
@@ -33,10 +34,16 @@ public class CopyUtils {
 
   private static Map<Class, Enum[]> enumsCacheMap;
 
+  private static Map<Class, Method> valueOfMethodCache;
+
+  private static Map<String, Enum> targetEnumOfName;
+
   static {
     beanCopierMap = new HashMap<>();
     fieldCacheMap = new HashMap<>();
     enumsCacheMap = new HashMap<>();
+    targetEnumOfName = new HashMap<>();
+    valueOfMethodCache=new HashMap<>();
   }
 
   public static void copy(Object sources, Object target) {
@@ -81,11 +88,11 @@ public class CopyUtils {
   }
 
   private static Object getEnumByName(Field targetField, Object target, String name) {
-    //获取valueOf 方法
-    Method targetValueOfMethod = getEnumMethodAboutValueOf(targetField);
     //判断是否有该枚举值
     Object enumValue;
     if (existEnumName(targetField, target, name)) {
+      //获取valueOf 方法
+      Method targetValueOfMethod = getEnumMethodAboutValueOf(targetField);
       //获取枚举值
       enumValue = getEnumValueByValueOf(targetValueOfMethod, target, name);
     } else {
@@ -95,10 +102,8 @@ public class CopyUtils {
   }
 
   private static boolean existEnumName(Field targetField, Object target, String name) {
-    //获取values方法
-    Method targetValuesOfMethod = getEnumMethodAboutValues(targetField);
     //获取所有枚举值
-    Enum[] enumList = getEnumList(targetValuesOfMethod, target);
+    Enum[] enumList = getEnumList(targetField, target);
     //判断name是否存在
     for (Enum e : enumList) {
       if (e.name().equals(name)) {
@@ -108,13 +113,15 @@ public class CopyUtils {
     return false;
   }
 
-  private static Enum[] getEnumList(Method method, Object target) {
+  private static Enum[] getEnumList(Field targetField, Object target) {
     Enum[] enumList;
     if (enumsCacheMap.containsKey(target.getClass())) {
       return enumsCacheMap.get(target.getClass());
     }
+    //获取values方法
+    Method targetValuesOfMethod = getEnumMethodAboutValues(targetField);
     try {
-      enumList = (Enum[]) method.invoke(target);
+      enumList = (Enum[]) targetValuesOfMethod.invoke(target);
       enumsCacheMap.put(target.getClass(), enumList);
     } catch (IllegalAccessException | InvocationTargetException e) {
       log.error("not found values method!! class:{} err:{}", target.getClass(), e);
@@ -125,9 +132,14 @@ public class CopyUtils {
 
   private static Object getEnumValueByValueOf(Method targetValueOfMethod, Object target,
       String name) {
+    String key = getEnumKeyByName(target, name);
+    if (targetEnumOfName.containsKey(key)) {
+      return targetEnumOfName.get(key);
+    }
     Object enumValue;
     try {
       enumValue = targetValueOfMethod.invoke(target, name);
+      targetEnumOfName.put(key, (Enum) enumValue);
     } catch (IllegalAccessException | InvocationTargetException e) {
       log.error("not found value of method!! class:{} err:{}", target.getClass(), e);
       throw new RuntimeException("copier of the failure!");
@@ -135,10 +147,22 @@ public class CopyUtils {
     return enumValue;
   }
 
+  private static String getEnumKeyByName(Object target, String name) {
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append(target.getClass());
+    stringBuilder.append("&");
+    stringBuilder.append(name);
+    return stringBuilder.toString();
+  }
+
   private static Method getEnumMethodAboutValueOf(Field targetField) {
     Method targetValueOfMethod;
+    if (valueOfMethodCache.containsKey(targetField.getType())) {
+      return valueOfMethodCache.get(targetField.getType());
+    }
     try {
       targetValueOfMethod = targetField.getType().getMethod("valueOf", String.class);
+      valueOfMethodCache.put(targetField.getType(), targetValueOfMethod);
     } catch (NoSuchMethodException e) {
       log.error("not found value of method!! class:{}", targetField.getClass());
       throw new RuntimeException("copier of the failure!");
